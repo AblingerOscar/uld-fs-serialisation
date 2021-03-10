@@ -7,6 +7,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "uld-fs-serialisation", "uld
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "uld-fs-dtos", "uld-fs-dtos\uld-fs-dtos.fsproj", "{BC8DC020-3E58-4772-9E04-C58A3BA09997}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "uld-fs-serialisation-tests", "uld-fs-serialisation-tests\uld-fs-serialisation-tests.fsproj", "{DAC33C4F-B5B6-438E-BD02-13378B40475C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +43,18 @@ Global
 		{BC8DC020-3E58-4772-9E04-C58A3BA09997}.Release|x64.Build.0 = Release|Any CPU
 		{BC8DC020-3E58-4772-9E04-C58A3BA09997}.Release|x86.ActiveCfg = Release|Any CPU
 		{BC8DC020-3E58-4772-9E04-C58A3BA09997}.Release|x86.Build.0 = Release|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Debug|x64.Build.0 = Debug|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Debug|x86.Build.0 = Debug|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Release|x64.ActiveCfg = Release|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Release|x64.Build.0 = Release|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Release|x86.ActiveCfg = Release|Any CPU
+		{DAC33C4F-B5B6-438E-BD02-13378B40475C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
