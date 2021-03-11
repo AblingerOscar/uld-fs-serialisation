@@ -1,150 +1,153 @@
-﻿module ULD.Fs.Serialisation.Serialisers
+﻿namespace ULD.Fs.Serialisation
 
-open ULD.Fs.DTOs
+module private Serialisers =
 
-type SerialisationError = string seq
-type LanguageDefinitionXML = FSharp.Data.XmlProvider<Schema = "https://raw.githubusercontent.com/AblingerOscar/uld-definition/main/v1.0.0-schema.xsd">
+  open ULD.Fs.DTOs
 
-let parseLanguageDefinition (text: string) =
-  let parsedDef = LanguageDefinitionXML.Parse text
-  parsedDef.LanguageDefinition
+  type SerialisationError = string seq
+  type LanguageDefinitionXML = FSharp.Data.XmlProvider<Schema = "https://raw.githubusercontent.com/AblingerOscar/uld-definition/main/v1.0.0-schema.xsd">
 
-let symbolParsers =
-  Map.empty<string, System.Xml.Linq.XElement -> SymbolDefinition>
-    .Add("action", (fun el -> Action el.Value))
-    .Add("nonTerminal", (fun el -> NonTerminal (el.Attribute (System.Xml.Linq.XName.op_Implicit "referencedRule")).Value))
-    .Add("oneOf", (fun el ->
-      let options =
-        el.Elements ()
-        |> Seq.map (fun optionEl -> optionEl.Value)
-        |> Seq.toList
-      let allowNone =
-        el.Attributes ()
-        |> Seq.tryFind (fun attr -> attr.Name.LocalName = "allowNone")
-        |> Option.map (fun attr -> attr.Value)
-        |> Option.map bool.Parse
-        |> Option.defaultValue false
+  let parseLanguageDefinition (text: string) =
+    let parsedDef = LanguageDefinitionXML.Parse text
+    parsedDef.LanguageDefinition
 
-      OneOf (allowNone, options)))
-    .Add("whitespace", (fun _ -> Whitespace))
-    .Add("lineEnd", (fun _ -> LineEnd))
-    .Add("string", (fun el -> String el.Value))
-    .Add("digit", (fun _ -> Digit))
-    .Add("letter", (fun _ -> Letter))
-    .Add("letterOrDigit", (fun _ -> LetterOrDigit))
-    .Add("lowercaseLetter", (fun _ -> LowercaseLetter))
-    .Add("uppercaseLetter", (fun _ -> UppercaseLetter))
-    .Add("character", (fun _ -> Character))
-    .Add("characterOf", (fun el -> CharacterOf (List.ofSeq el.Value)))
-    .Add("characterExcept", (fun el -> CharacterExcept (List.ofSeq el.Value)))
+  let getAttribute (localName: string) (el: System.Xml.Linq.XElement) =
+    el.Attributes()
+    |> Seq.tryFind (fun attr -> attr.Name.LocalName = localName)
+    |> Option.map (fun attr -> attr.Value)
 
-let r = symbolParsers.Add ("lineEnd", (fun el -> LineEnd))
+  let symbolParsers =
+    Map.empty<string, System.Xml.Linq.XElement -> SymbolDefinition>
+      .Add("action", (fun el -> Action el.Value))
+      .Add("nonTerminal", (fun el -> NonTerminal (getAttribute "referencedRule" el |> Option.get)))
+      .Add("oneOf", (fun el ->
+        let options =
+          el.Elements ()
+          |> Seq.map (fun optionEl -> optionEl.Value)
+          |> Seq.toList
+        let allowNone =
+          getAttribute "allowNone" el
+          |> Option.map bool.Parse
+          |> Option.defaultValue false
 
-let err (msg: string) = Error (seq { msg })
+        OneOf (allowNone, options)))
+      .Add("whitespace", (fun _ -> Whitespace))
+      .Add("lineEnd", (fun _ -> LineEnd))
+      .Add("string", (fun el -> String el.Value))
+      .Add("digit", (fun _ -> Digit))
+      .Add("letter", (fun _ -> Letter))
+      .Add("letterOrDigit", (fun _ -> LetterOrDigit))
+      .Add("lowercaseLetter", (fun _ -> LowercaseLetter))
+      .Add("uppercaseLetter", (fun _ -> UppercaseLetter))
+      .Add("character", (fun _ -> Character))
+      .Add("characterOf", (fun el -> CharacterOf (List.ofSeq el.Value)))
+      .Add("characterExcept", (fun el -> CharacterExcept (List.ofSeq el.Value)))
 
-let getOk result =
-  match result with
-  | Ok ret -> Some ret
-  | Error _ -> None
+  let err (msg: string) = Error (seq { msg })
 
-let getError result =
-  match result with
-  | Ok _ -> None
-  | Error messages -> Some messages
+  let getOk result =
+    match result with
+    | Ok ret -> Some ret
+    | Error _ -> None
 
-let transformComment (commentDefinition: LanguageDefinitionXML.Comment) =
-  match commentDefinition.Start, commentDefinition.End, commentDefinition.TreatAs with
-  | "", "", _ -> Error (seq { "'Start' of a comment may not be empty"; "'End' of a comment may not be empty" })
-  | "", _, _ -> err "'Start' of a comment may not be empty"
-  | _, "", _ -> err "'End' of a comment may not be empty"
-  | _, _, _ ->
-    Ok { startMarker = commentDefinition.Start; endMarker = commentDefinition.End; treatAs = commentDefinition.TreatAs }
+  let getError result =
+    match result with
+    | Ok _ -> None
+    | Error messages -> Some messages
 
-let transformComments (commentsDefinition: LanguageDefinitionXML.Comments) =
-  let docCommentsRes =
-    commentsDefinition.DocumentationComments.Comments
-    |> Array.toList
-    |> List.map transformComment
-  let normalCommentsRes =
-    commentsDefinition.NormalComments.Comments
-    |> Array.toList
-    |> List.map transformComment
+  let transformComment (commentDefinition: LanguageDefinitionXML.Comment) =
+    match commentDefinition.Start, commentDefinition.End, commentDefinition.TreatAs with
+    | "", "", _ -> Error (seq { "'Start' of a comment may not be empty"; "'End' of a comment may not be empty" })
+    | "", _, _ -> err "'Start' of a comment may not be empty"
+    | _, "", _ -> err "'End' of a comment may not be empty"
+    | _, _, _ ->
+      Ok { startMarker = commentDefinition.Start; endMarker = commentDefinition.End; treatAs = commentDefinition.TreatAs }
 
-  let errors =
-    docCommentsRes
-    |> Seq.append normalCommentsRes
-    |> Seq.choose getError
-    |> Seq.collect id
+  let transformComments (commentsDefinition: LanguageDefinitionXML.Comments) =
+    let docCommentsRes =
+      commentsDefinition.DocumentationComments.Comments
+      |> Array.toList
+      |> List.map transformComment
+    let normalCommentsRes =
+      commentsDefinition.NormalComments.Comments
+      |> Array.toList
+      |> List.map transformComment
 
-  if Seq.isEmpty errors then
-    let getComments = List.choose getOk
+    let errors =
+      docCommentsRes
+      |> Seq.append normalCommentsRes
+      |> Seq.choose getError
+      |> Seq.collect id
 
-    Ok { documentationComments = getComments docCommentsRes; normalComments = getComments normalCommentsRes }
-  else
-    Error errors
+    if Seq.isEmpty errors then
+      let getComments = List.choose getOk
 
-let transformStartRules (startRules: string[]) =
-  if startRules.Length > 0 then
-    Ok (Array.toList startRules)
-  else
-    err "There has to be at least one starting rule defined"
+      Ok { documentationComments = getComments docCommentsRes; normalComments = getComments normalCommentsRes }
+    else
+      Error errors
 
-let transformRule (rule: LanguageDefinitionXML.Rule) =
-  let symbols =
-    rule.XElement.Elements ()
-    |> Seq.map (fun el ->
-      if symbolParsers.ContainsKey el.Name.LocalName then
-        Ok (symbolParsers.Item el.Name.LocalName el)
-      else
-        Error el.Name.LocalName
-    )
-  
-  let errors =
-    symbols
-    |> Seq.choose getError
-    |> String.concat ", "
+  let transformStartRules (startRules: string[]) =
+    if startRules.Length > 0 then
+      Ok (Array.toList startRules)
+    else
+      err "There has to be at least one starting rule defined"
 
-  if errors = "" then
-    Ok (rule.Name, symbols |> Seq.choose getOk |> Seq.toList)
-  else
-    Error $"Rule {rule.Name} contains the following elements that cannot be parsed: {errors}."
+  let transformRule (rule: LanguageDefinitionXML.Rule) =
+    let symbols =
+      rule.XElement.Elements ()
+      |> Seq.map (fun el ->
+        if symbolParsers.ContainsKey el.Name.LocalName then
+          Ok (symbolParsers.Item el.Name.LocalName el)
+        else
+          Error el.Name.LocalName
+      )
+    
+    let errors =
+      symbols
+      |> Seq.choose getError
+      |> String.concat ", "
 
-let transformRules (rules: LanguageDefinitionXML.Rule[]) =
-  let transformedRules =
-    rules
-    |> Array.toSeq
-    |> Seq.map transformRule
+    if errors = "" then
+      Ok (rule.Name, symbols |> Seq.choose getOk |> Seq.toList)
+    else
+      Error $"Rule {rule.Name} contains the following elements that cannot be parsed: {errors}."
 
-  let errors =
-    transformedRules
-    |> Seq.choose getError
+  let transformRules (rules: LanguageDefinitionXML.Rule[]) =
+    let transformedRules =
+      rules
+      |> Array.toSeq
+      |> Seq.map transformRule
 
-  if Seq.isEmpty errors then
-    transformedRules
-    |> Seq.choose getOk
-    |> Map.ofSeq
-    |> Ok
-  else
-    Error errors
+    let errors =
+      transformedRules
+      |> Seq.choose getError
 
-
-let transformLangDef (langDef: LanguageDefinitionXML.LanguageDefinition): Result<LanguageDefinition, SerialisationError> =
-  let transformedElements = (transformComments langDef.Comments), (transformStartRules langDef.StartRules), (transformRules langDef.Rules)
-
-  match transformedElements with
-  | Ok comments, Ok startRules, Ok rules ->
-    Ok ({ name = langDef.Name; filePattern = langDef.FilePattern; version = langDef.Version; comments = comments; startRules = startRules; rules = rules })
-  | commentsRes, startRulesRes, rulesRes ->
-    Error (seq {
-        yield getError commentsRes
-        yield getError startRulesRes
-        yield getError rulesRes
-      }
-      |> Seq.choose id
-      |> Seq.collect id)
+    if Seq.isEmpty errors then
+      transformedRules
+      |> Seq.choose getOk
+      |> Map.ofSeq
+      |> Ok
+    else
+      Error errors
 
 
-let deserialiseLanguageDefinition (text: string): Result<LanguageDefinition, SerialisationError> =
-  match parseLanguageDefinition text with
-  | Some langDef -> transformLangDef langDef
-  | None -> err "Could not find root element <languageDefinition>"
+  let transformLangDef (langDef: LanguageDefinitionXML.LanguageDefinition): Result<LanguageDefinition, SerialisationError> =
+    let transformedElements = (transformComments langDef.Comments), (transformStartRules langDef.StartRules), (transformRules langDef.Rules)
+
+    match transformedElements with
+    | Ok comments, Ok startRules, Ok rules ->
+      Ok ({ name = langDef.Name; filePattern = langDef.FilePattern; version = langDef.Version; comments = comments; startRules = startRules; rules = rules })
+    | commentsRes, startRulesRes, rulesRes ->
+      Error (seq {
+          yield getError commentsRes
+          yield getError startRulesRes
+          yield getError rulesRes
+        }
+        |> Seq.choose id
+        |> Seq.collect id)
+
+
+  let deserialiseLanguageDefinition (text: string): Result<LanguageDefinition, SerialisationError> =
+    match parseLanguageDefinition text with
+    | Some langDef -> transformLangDef langDef
+    | None -> err "Could not find root element <languageDefinition>"
