@@ -111,8 +111,8 @@ let ``Valid language definition with all features returns the correct language d
     comments = {
       documentationComments = [
         {
-          startMarker = "/*"
-          endMarker = "*/"
+          start = "/*"
+          end' = "*/"
           treatAs = " "
         }
       ]

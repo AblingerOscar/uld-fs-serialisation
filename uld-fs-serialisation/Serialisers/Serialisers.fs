@@ -57,7 +57,7 @@ module private Serialisers =
     | "", _, _ -> err "'Start' of a comment may not be empty"
     | _, "", _ -> err "'End' of a comment may not be empty"
     | _, _, _ ->
-      Ok { startMarker = commentDefinition.Start; endMarker = commentDefinition.End; treatAs = commentDefinition.TreatAs }
+      Ok { start = commentDefinition.Start; end' = commentDefinition.End; treatAs = commentDefinition.TreatAs }
 
   let transformComments (commentsDefinition: LanguageDefinitionXML.Comments) =
     let docCommentsRes =

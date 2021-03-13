@@ -3,8 +3,8 @@ namespace ULD.Fs
 module DTOs =
 
   type public CommentDefinition = {
-    startMarker: string
-    endMarker: string
+    start: string
+    end': string
     treatAs: string
   }
 
