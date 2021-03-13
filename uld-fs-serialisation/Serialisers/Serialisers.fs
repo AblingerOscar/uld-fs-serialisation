@@ -51,13 +51,11 @@ module private Serialisers =
     | Ok _ -> None
     | Error messages -> Some messages
 
-  let transformComment (commentDefinition: LanguageDefinitionXML.Comment) =
-    match commentDefinition.Start, commentDefinition.End, commentDefinition.TreatAs with
-    | "", "", _ -> Error (seq { "'Start' of a comment may not be empty"; "'End' of a comment may not be empty" })
-    | "", _, _ -> err "'Start' of a comment may not be empty"
-    | _, "", _ -> err "'End' of a comment may not be empty"
-    | _, _, _ ->
-      Ok { start = commentDefinition.Start; end' = commentDefinition.End; treatAs = commentDefinition.TreatAs }
+  let transformComment (commentDefinition: LanguageDefinitionXML.Comment) = {
+      start = commentDefinition.Start
+      end' = commentDefinition.End
+      treatAs = commentDefinition.TreatAs
+    }
 
   let transformComments (commentsDefinition: LanguageDefinitionXML.Comments) =
     let docCommentsRes =
@@ -69,24 +67,12 @@ module private Serialisers =
       |> Array.toList
       |> List.map transformComment
 
-    let errors =
-      docCommentsRes
-      |> Seq.append normalCommentsRes
-      |> Seq.choose getError
-      |> Seq.collect id
+    {
+      documentationComments = docCommentsRes
+      normalComments = normalCommentsRes
+    }
 
-    if Seq.isEmpty errors then
-      let getComments = List.choose getOk
-
-      Ok { documentationComments = getComments docCommentsRes; normalComments = getComments normalCommentsRes }
-    else
-      Error errors
-
-  let transformStartRules (startRules: string[]) =
-    if startRules.Length > 0 then
-      Ok (Array.toList startRules)
-    else
-      err "There has to be at least one starting rule defined"
+  let transformStartRules = Array.toList
 
   let transformRule (rule: LanguageDefinitionXML.Rule) =
     let symbols =
@@ -128,20 +114,15 @@ module private Serialisers =
 
 
   let transformLangDef (langDef: LanguageDefinitionXML.LanguageDefinition): Result<LanguageDefinition, SerialisationError> =
-    let transformedElements = (transformComments langDef.Comments), (transformStartRules langDef.StartRules), (transformRules langDef.Rules)
-
-    match transformedElements with
-    | Ok comments, Ok startRules, Ok rules ->
-      Ok ({ name = langDef.Name; filePattern = langDef.FilePattern; version = langDef.Version; comments = comments; startRules = startRules; rules = rules })
-    | commentsRes, startRulesRes, rulesRes ->
-      Error (seq {
-          yield getError commentsRes
-          yield getError startRulesRes
-          yield getError rulesRes
-        }
-        |> Seq.choose id
-        |> Seq.collect id)
-
+    transformRules langDef.Rules
+    |> Result.map (fun rules -> {
+        name = langDef.Name
+        filePattern = langDef.FilePattern
+        version = langDef.Version
+        comments = transformComments langDef.Comments
+        startRules = transformStartRules langDef.StartRules
+        rules = rules
+      })
 
   let parseLanguageDefinition (text: string) =
     try
