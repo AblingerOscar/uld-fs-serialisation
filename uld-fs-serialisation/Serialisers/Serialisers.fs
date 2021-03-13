@@ -124,15 +124,21 @@ module private Serialisers =
         rules = rules
       })
 
-  let parseLanguageDefinition (text: string) =
+  let parseLanguageDefinition (parsedDef: LanguageDefinitionXML.Choice) =
+    match parsedDef.LanguageDefinition with
+    | Some langDef -> Ok langDef
+    | None -> err "Could not find root element <languageDefinition>"
+
+  let deserialiseLanguageDefinitionFromString (text: string): Result<LanguageDefinition, SerialisationError> =
     try
-      let parsedDef = LanguageDefinitionXML.Parse text
-      match parsedDef.LanguageDefinition with
-      | Some langDef -> Ok langDef
-      | None -> err "Could not find root element <languageDefinition>"
+      parseLanguageDefinition (LanguageDefinitionXML.Parse text)
+      |> Result.bind transformLangDef
     with
       | :? System.Xml.XmlException as ex -> err ex.Message
-
-  let deserialiseLanguageDefinition (text: string): Result<LanguageDefinition, SerialisationError> =
-    parseLanguageDefinition text
-    |> Result.bind transformLangDef
+  
+  let deserialiseLanguageDefinitionFromFile (file: string): Result<LanguageDefinition, SerialisationError> =
+    try
+      parseLanguageDefinition (LanguageDefinitionXML.Load file)
+      |> Result.bind transformLangDef
+    with
+      | :? System.Xml.XmlException as ex -> err ex.Message
