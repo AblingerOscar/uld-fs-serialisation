@@ -11,11 +11,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharp.Data.Xsd" Version="1.0.2" />
+    <PackageReference Include="FSharp.Data" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\uld-fs-dtos\uld-fs-dtos.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.1" />
   </ItemGroup>
 
 </Project>
