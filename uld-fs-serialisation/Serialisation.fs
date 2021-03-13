@@ -5,11 +5,13 @@ open System.IO
 open ULD.Fs.Serialisation.Serialisers
 
 module public ULDSerialser =
+  
+  type DeserialisationResult = Result<LanguageDefinition, SerialisationError>
 
-  let deserialiseFromString(text: string): Result<LanguageDefinition, SerialisationError> =
+  let deserialiseFromString(text: string): DeserialisationResult =
     deserialiseLanguageDefinition text
 
-  let deserialiseFromFile(file: string): Result<LanguageDefinition, SerialisationError> =
+  let deserialiseFromFile(file: string): DeserialisationResult =
     try
       File.ReadLines file
       |> Seq.cast<string>

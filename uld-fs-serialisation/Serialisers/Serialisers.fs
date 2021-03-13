@@ -7,10 +7,6 @@ module private Serialisers =
   type SerialisationError = string seq
   type LanguageDefinitionXML = FSharp.Data.XmlProvider<Schema = "https://raw.githubusercontent.com/AblingerOscar/uld-definition/main/v1.0.0-schema.xsd">
 
-  let parseLanguageDefinition (text: string) =
-    let parsedDef = LanguageDefinitionXML.Parse text
-    parsedDef.LanguageDefinition
-
   let getAttribute (localName: string) (el: System.Xml.Linq.XElement) =
     el.Attributes()
     |> Seq.tryFind (fun attr -> attr.Name.LocalName = localName)
@@ -147,7 +143,15 @@ module private Serialisers =
         |> Seq.collect id)
 
 
+  let parseLanguageDefinition (text: string) =
+    try
+      let parsedDef = LanguageDefinitionXML.Parse text
+      match parsedDef.LanguageDefinition with
+      | Some langDef -> Ok langDef
+      | None -> err "Could not find root element <languageDefinition>"
+    with
+      | :? System.Xml.XmlException as ex -> err ex.Message
+
   let deserialiseLanguageDefinition (text: string): Result<LanguageDefinition, SerialisationError> =
-    match parseLanguageDefinition text with
-    | Some langDef -> transformLangDef langDef
-    | None -> err "Could not find root element <languageDefinition>"
+    parseLanguageDefinition text
+    |> Result.bind transformLangDef
