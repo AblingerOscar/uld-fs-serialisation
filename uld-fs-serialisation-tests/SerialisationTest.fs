@@ -5,14 +5,14 @@ open NUnit.Framework
 open ULD.Fs.Serialisation.ULDSerialser
 open ULD.Fs.DTOs
 
-type InitMsgUtils() =
-  inherit FSharpCustomMessageFormatter()
+type InitMsgUtils () =
+  inherit FSharpCustomMessageFormatter ()
 
 [<SetUp>]
 let Setup () =
     ()
 
-let isOkWith (value: Result<'a, 'b>): 'a option =
+let isOk (value: Result<'a, 'b>): 'a option =
   match value with
   | Ok res ->
     Some res
@@ -20,13 +20,15 @@ let isOkWith (value: Result<'a, 'b>): 'a option =
     Assert.Fail ("Expected Ok, but found Error" + msg.ToString())
     None
 
-let isErrorWith (value: Result<'a, 'b>): 'b option =
+let isErrorWith (expectedResult: 'b) (value: Result<'a, 'b>): 'b option =
   match value with
   | Ok msg ->
     Assert.Fail ("Expected Error, but found Ok" + msg.ToString())
     None
   | Error res ->
+    res |> should equal expectedResult
     Some res
+
 
 let languageDefinitionIsEqualTo (expected: LanguageDefinition) (actual: LanguageDefinition) =
   should equal (expected.name) (actual.name)
@@ -150,7 +152,7 @@ let ``Valid language definition with all features returns the correct language d
 
   // then: a language definition file with the expected values is returned
   res
-  |> isOkWith
+  |> isOk
   |> Option.iter (languageDefinitionIsEqualTo expected)
 
 
@@ -161,5 +163,108 @@ let ``Text that isn't a xml file results in an error`` () =
 
   // then: an error is returned
   ret
-  |> isErrorWith
-  |> Option.iter (should equal (seq { "Data at the root level is invalid. Line 1, position 1." }))
+  |> isErrorWith (seq { "Data at the root level is invalid. Line 1, position 1." })
+  |> ignore
+
+[<Test>]
+let ``XML file without a languageDefiniton`` () =
+  // given: a XML that is valid according to the .xsd, but does not have the correct root element
+  let commentXmlPart = """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<p1:comments xmlns:p1="https://github.com/AblingerOscar/autosupport-definition" xmlns="https://github.com/AblingerOscar/autosupport-definition">
+  <p1:normalComments />
+  <p1:documentationComments>
+    <p1:comment>
+      <p1:start>/*</p1:start>
+      <p1:end>*/</p1:end>
+      <p1:treatAs> </p1:treatAs>
+    </p1:comment>
+  </p1:documentationComments>
+</p1:comments>
+"""
+
+  // when: this XML is deserialised
+  let res = deserialiseFromString commentXmlPart
+
+  // then: an error is returned that mentiones the missing root element
+  res
+  |> isErrorWith (seq { "Could not find root element <languageDefinition>" })
+  |> ignore
+
+[<Test>]
+let ``Invalid elements in rules`` () =
+  // given: a XML that has invalid symbols in a rule
+  let commentXmlPart = """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<languageDefinition p1:name="SimpleGrammar" p1:filePattern="**/*.simple" p1:version="v1.0.0" xmlns:p1="https://github.com/AblingerOscar/autosupport-definition" xmlns="https://github.com/AblingerOscar/autosupport-definition">
+  <p1:comments>
+    <p1:normalComments />
+    <p1:documentationComments />
+  </p1:comments>
+  <p1:startRules>
+    <p1:startRule>TestGrammar</p1:startRule>
+  </p1:startRules>
+  <p1:rules>
+    <p1:rule p1:name="TestGrammar">
+      <action>some action</action>
+      <foo></foo>
+      <bar></bar>
+      <oof></oof>
+      <action>some action</action>
+    </p1:rule>
+  </p1:rules>
+</languageDefinition>
+"""
+
+  // when: this XML is deserialised
+  let res = deserialiseFromString commentXmlPart
+
+  // then: an error is returned listing the invalid symbols
+  res
+  |> isErrorWith (seq {
+      "Rule TestGrammar contains the following elements that cannot be parsed: foo, bar, oof."
+    })
+  |> ignore
+
+[<Test>]
+let ``Invalid elements outside of <rule> are ignored`` () =
+  // given: a XML that has invalid symbols in a rule
+  let commentXmlPart = """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<languageDefinition p1:name="TestGrammar" p1:filePattern="**/*.simple" p1:version="v1.0.0" xmlns:p1="https://github.com/AblingerOscar/autosupport-definition" xmlns="https://github.com/AblingerOscar/autosupport-definition">
+  <foo></foo>
+  <p1:comments>
+    <p1:normalComments />
+    <p1:documentationComments />
+    <foo></foo>
+  </p1:comments>
+  <p1:startRules>
+    <foo></foo>
+    <p1:startRule>TestGrammar</p1:startRule>
+  </p1:startRules>
+  <p1:rules>
+    <p1:rule p1:name="TestGrammar">
+      <action>some action</action>
+    </p1:rule>
+    <foo></foo>
+  </p1:rules>
+</languageDefinition>
+"""
+
+  let expected = {
+    name = Some "TestGrammar"
+    filePattern = Some "**/*.simple"
+    version = "v1.0.0"
+    comments = {
+      normalComments = []
+      documentationComments = []
+    }
+    startRules = [ "TestGrammar" ]
+    rules = Map.empty
+      .Add("TestGrammar", [ Action "some action" ])
+  }
+
+  // when: this XML is deserialised
+  let res = deserialiseFromString commentXmlPart
+
+  // then: success is returned
+  res
+  |> isOk
+  |> Option.iter (languageDefinitionIsEqualTo expected)
