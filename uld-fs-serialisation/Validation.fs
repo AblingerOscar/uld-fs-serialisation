@@ -226,7 +226,7 @@ module public ULDValidation =
               | _ -> None
             )
             |> List.filter hasDuplicates
-            |> List.map (Array.ofList >> string)
+            |> List.map (Array.ofList >> System.String)
             |> List.map (fun characters ->
               Warning $"A CharacterOf with the characters '{characters}' has duplicate characters (found in rule '{fst rule}') – you can simplify it"
             )
