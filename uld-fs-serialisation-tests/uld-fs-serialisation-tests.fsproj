@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="ValidationTest.fs" />
     <Compile Include="SerialisationTest.fs" />
   </ItemGroup>
 
