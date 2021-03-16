@@ -92,7 +92,7 @@ module public ULDValidation =
         if langDef.startRules.Length = 0 then
           yield Error "No start rule defined"
       ]
-    let private noStartRulesHasNoProductionsDefined (langDef: LanguageDefinition) = [
+    let private noStartRuleReferencesAnUnknownRule (langDef: LanguageDefinition) = [
         let ruleNames = getAllRuleNames langDef
 
         let undefinedRules =
@@ -258,7 +258,7 @@ module public ULDValidation =
               | _ -> None
             )
             |> List.filter hasDuplicates
-            |> List.map (Array.ofList >> string)
+            |> List.map (Array.ofList >> System.String)
             |> List.map (fun characters ->
               Warning $"A CharacterExcept with the characters '{characters}' has duplicate characters (found in rule '{fst rule}') – you can simplify it"
             )
@@ -273,7 +273,7 @@ module public ULDValidation =
       noRuleIsUnreferenced;
       noRuleHasNoSymbols;
       atLeastOneStartRule;
-      noStartRulesHasNoProductionsDefined;
+      noStartRuleReferencesAnUnknownRule;
       noNonTerminalsReferencesAnUnknownRule;
       noActionHasAnInvalidCommands;
       noOneOfOptionReferencesAnUnknownRule;
