@@ -97,7 +97,7 @@ module public ULDValidation =
 
         let undefinedRules =
           langDef.startRules
-          |> List.filter ruleNames.Contains
+          |> List.filter (ruleNames.Contains >> not)
 
         for undefinedRule in undefinedRules do
           yield Warning $"Starting rule '{undefinedRule}' does not exist"
@@ -115,7 +115,7 @@ module public ULDValidation =
               | _-> None
             )
             |> List.distinct
-            |> List.filter ruleNames.Contains
+            |> List.filter (ruleNames.Contains >> not)
 
           for undefinedRule in undefinedReferencedRules do
             yield Error $"Rule '{undefinedRule}' does not have a defined production (referenced in a NonTerminal symbol in rule '{fst rule}')"
