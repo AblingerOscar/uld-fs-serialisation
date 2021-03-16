@@ -49,7 +49,7 @@ module public ULDValidation =
             yield Error $"{nrOfEmptyStarts} comment definition {commentElementName}s are empty – empty strings would match everything, {explanation}"
       ]
     let private commentStartsAreNotEmpty = commentElementsAreNotEmpty (fun comment -> comment.start) "start" "so everything would be a comment"
-    let private commentEndsAreNotEmpty =  commentElementsAreNotEmpty (fun comment -> comment.end') "end" "so comments would always immediatedly end"
+    let private commentEndsAreNotEmpty =  commentElementsAreNotEmpty (fun comment -> comment.end') "end" "so comments would immediatedly end"
     let private noRuleHasAnEmptyName (langDef: LanguageDefinition) = [
         let nrOfEmptyRuleNames =
           langDef.rules
@@ -102,9 +102,8 @@ module public ULDValidation =
           langDef.startRules
           |> List.filter ruleNames.Contains
 
-        if undefinedRules.Length <> 0 then
-          for undefinedRule in undefinedRules do
-            yield Error $"Starting rule \"{undefinedRule}\" does not have a defined production"
+        for undefinedRule in undefinedRules do
+          yield Warning $"Starting rule '{undefinedRule}' does not exist"
       ]
     let private noNonTerminalsReferencesAnUnknownRule (langDef: LanguageDefinition) = [
         let ruleNames = getAllRuleNames langDef
@@ -155,10 +154,10 @@ module public ULDValidation =
             )
             |> List.collect id
             |> List.distinct
-            |> List.filter ruleNames.Contains
+            |> List.filter (ruleNames.Contains >> not)
 
           for undefinedRule in undefinedReferencedRules do
-            yield Error $"Rule '{undefinedRule}' does not have a defined production (referenced in a OneOf symbol in rule '{fst rule}')"
+            yield Error $"Rule '{undefinedRule}' does not have a defined production (referenced in an OneOf symbol in rule '{fst rule}')"
       ]
     let private noOneOfIsEmptyAndDoesNotAllowNone (langDef: LanguageDefinition) = [
         let ruleContainsEmptyOneOf =
