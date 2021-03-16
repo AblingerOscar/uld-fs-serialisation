@@ -82,12 +82,12 @@ module public ULDValidation =
           yield Warning $"Rule '{unreferencedRule}' is never referenced – you can omit it"
       ]
     let private noRuleHasNoSymbols (langDef: LanguageDefinition) = [ // warning only
-      yield!
-        langDef.rules
-        |> Map.toList
-        |> List.filter (snd >> List.isEmpty)
-        |> List.map (fun rule -> Warning $"Rule '{rule}' has no symbols – you can omit it")
-    ]
+        yield!
+          langDef.rules
+          |> Map.toList
+          |> List.filter (snd >> List.isEmpty)
+          |> List.map (fun rule -> Warning $"Rule '{fst rule}' has no symbols – you can omit it")
+      ]
     let private atLeastOneStartRule (langDef: LanguageDefinition) = [
         if langDef.startRules.Length = 0 then
           yield Error "No start rule defined"
@@ -292,7 +292,7 @@ module public ULDValidation =
     }
     static member Empty = { Errors = []; Warnings = [] }
 
-  let validate (langDef: LanguageDefinition): ValidationResult =
+  let public validate (langDef: LanguageDefinition): ValidationResult =
     Validators.ALL_VALIDATORS
     |> List.collect (fun validator -> validator langDef)
     |> List.fold (fun state warningOrError ->
