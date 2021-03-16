@@ -59,10 +59,7 @@ module public ULDValidation =
           |> Seq.length
 
         if nrOfEmptyRuleNames <> 0 then
-          if nrOfEmptyRuleNames = 1 then
-            yield Error "A rule name is empty"
-          else
-            yield Error $"{nrOfEmptyRuleNames} rule names are empty"
+          yield Error "A rule name is empty"
       ]
     let private noRuleIsUnreferenced (langDef: LanguageDefinition) = [ // warning only
         let ruleNames =
