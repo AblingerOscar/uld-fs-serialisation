@@ -265,24 +265,24 @@ module public ULDValidation =
       ]
 
     let ALL_VALIDATORS: (LanguageDefinition -> WarningOrError list) list = [
-      nameIsNotEmpty;
-      versionIsV1_0_0;
+      nameIsNotEmpty; // warning
+      versionIsV1_0_0; // warning
       commentStartsAreNotEmpty;
       commentEndsAreNotEmpty;
       noRuleHasAnEmptyName;
-      noRuleIsUnreferenced;
-      noRuleHasNoSymbols;
+      noRuleIsUnreferenced; // warning
+      noRuleHasNoSymbols; // warning
       atLeastOneStartRule;
       noStartRuleReferencesAnUnknownRule;
       noNonTerminalsReferencesAnUnknownRule;
       noActionHasAnInvalidCommands;
       noOneOfOptionReferencesAnUnknownRule;
       noOneOfIsEmptyAndDoesNotAllowNone;
-      noOneOfIsEmptyAndDoesAllowNone;
+      noOneOfIsEmptyAndDoesAllowNone; // warning
       noCharacterOfIsEmpty;
-      noCharacterOfHasDuplicateCharacters;
+      noCharacterOfHasDuplicateCharacters; // warning
       noCharacterExceptIsEmpty;
-      noCharacterExceptHasDuplicateCharacters;
+      noCharacterExceptHasDuplicateCharacters; // warning
     ]
     
   type ValidationResult =
