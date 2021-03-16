@@ -1,6 +1,6 @@
 namespace ULD.Fs.Tests
 
-module Serialisation =
+module SerialisationTest =
 
   open FsUnit
   open NUnit.Framework
@@ -12,7 +12,7 @@ module Serialisation =
 
   [<SetUp>]
   let Setup () =
-      ()
+    ()
 
   let isOk (value: Result<'a, 'b>): 'a option =
     match value with
