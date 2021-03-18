@@ -3,6 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>ULD.Fs.Serialisation</RootNamespace>
+    <AssemblyName>uld.fs.serialisation</AssemblyName>
+    <Authors>AblingerOscar</Authors>
+    <Product>uld</Product>
+    <Description>This nuget package includes means to deserialise, serialise and validate universal language definitions.
+If you only need the DTOs or want an etire LSP server based upon the ULD, visit https://github.com/AblingerOscar/Universal-Language-Definition to find the right package.</Description>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/AblingerOscar/uld-fs-serialisation</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/AblingerOscar/uld-fs-serialisation</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +29,13 @@
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
